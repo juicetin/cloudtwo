@@ -77,7 +77,7 @@ def summariseVisitList(record):
     iterex = IteratorEx(pairs)
     for pair in iterex:
         country, date = pair 
-        tmp_country = [""]
+        tmp_cur_country = [""]
         try:
             tmp = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
         except ValueError:
@@ -100,33 +100,37 @@ def summariseVisitList(record):
         if country != cur_country[0] or not iterex.hasNext:
             for sublist in summarised:
                 # Modify country entry as previous one has ended
-                if sublist[0] == cur_country[0]:
-                    sublist[1] += 1
+                try:
+                    if sublist[0] == cur_country[0]:
+                        sublist[1] += 1
 
-                    new_first_time = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-                    time_spent = new_first_time - cur_first_date[0]
+                        new_first_time = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+                        time_spent = new_first_time - cur_first_date[0]
 
-                    seconds = time_spent.total_seconds()
+                        seconds = time_spent.total_seconds()
 
-                    # Modify max visit time for country
-                    if seconds > sublist[2]:
-                        sublist[2] = seconds 
+                        # Modify max visit time for country
+                        if seconds > sublist[2]:
+                            sublist[2] = seconds 
 
-                    # Modify min visit time for country
-                    if seconds < sublist[3]:
-                        sublist[3] = seconds 
+                        # Modify min visit time for country
+                        if seconds < sublist[3]:
+                            sublist[3] = seconds 
 
-                    # Update total time for country
-                    sublist[5] += seconds 
+                        # Update total time for country
+                        sublist[5] += seconds 
 
-                    # Update new current country and start time
-                    tmp_country[0] = cur_country[0]
-                    cur_country[0] = country
-                    cur_first_date[0] = new_first_time
+                        # Update new current country and start time
+                        tmp_cur_country[0] = cur_country[0]
+                        cur_country[0] = country
+                        cur_first_date[0] = new_first_time
+                        break
+
+                except ValueError:
                     break
 
         # When the last photo changes country (and hence has visit time 0)
-        if country != tmp_country[0] and not iterex.hasNext:
+        if country != tmp_cur_country[0] and not iterex.hasNext:
             for sublist in summarised:
                 if sublist[0] == country:
                     sublist[1] += 1
