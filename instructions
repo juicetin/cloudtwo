@@ -1,0 +1,6 @@
+hdfs dfs -rm -r -f countryMap &&
+spark-submit --master yarn --num-executors 3 assignment2.py && hdfs dfs -cat countryMap/part-00000
+
+hdfs dfs -cat countryMap/part-00000
+
+(u'Mystery', [(u'Twelve Monkeys (a.k.a. 12 Monkeys) (1995)', 48215), (u'Seven (a.k.a. Se7en) (1995)', 44001), (u'Mission: Impossible (1996)', 41078), (u'Memento (2000)', 30803), (u'L.A. Confidential (1997)', 29067)])
