@@ -6,22 +6,6 @@ import sys
 from pyspark import SparkContext
 import datetime
 
-class IteratorEx(object):
-    def __init__(self, it):
-        self.it = iter(it)
-        self.sentinel = object()
-        self.nextItem = next(self.it, self.sentinel)
-        self.hasNext = self.nextItem is not self.sentinel
-
-    def next(self):
-        ret, self.nextItem = self.nextItem, next(self.it, self.sentinel)
-        self.hasNext = self.nextItem is not self.sentinel
-        return ret
-
-    def __iter__(self):
-        while self.hasNext:
-            yield self.next()
-
 # Takes a flickr places info file and extracts (placeId, country)
 def extractCountry(record):
     try:
@@ -40,21 +24,12 @@ def extractUserPhotos(record):
     except:
         return()
 
-# Swap key/value tuples around, from ((a, b), c) to ((
-def userDateKey(record):
-    (owner, dateTaken), country = record
-    return ((owner, dateTaken), country)
-
-def mapListTmp(record):
-    user, dateCountries = record
-    value_list = []
-    for pair in dateCountries:
-        value_list.append(pair)
-    return(user, sorted(value_list))
-
-def validDate(date):
-    date_parts = date.split("-")
-    return int(date_parts[0]) > 1970 and int(date_parts[1]) > 0
+def sortPhotoList(record):
+    user, pairs = record
+    photos = []
+    for photo in pairs:
+        photos.append(photo)
+    return (user, sorted(photos))
 
 def summariseVisitList(record):
     user, pairs = record
@@ -64,19 +39,18 @@ def summariseVisitList(record):
     cur_country = [""]
     cur_first_date = [None]
     for pair in pairs:
-        cur_country[0] = pair[0]
+        cur_country[0] = pair[1]
+
+        # Get the first vaild date in the list of photos per user
         try:
-            cur_first_date[0] = datetime.datetime.strptime(pair[1], "%Y-%m-%d %H:%M:%S")
+            cur_first_date[0] = datetime.datetime.strptime(pair[0], "%Y-%m-%d %H:%M:%S")
             break
         except ValueError:
             continue
             
-        # Only get first item in iterable - requires loop as iterable cannot be accessed by index 
-
     # Iterate through all photos
-    iterex = IteratorEx(pairs)
-    for pair in iterex:
-        country, date = pair 
+    for i, pair in enumerate(pairs):
+        date, country = pair
         tmp_cur_country = [""]
         try:
             tmp = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
@@ -94,12 +68,11 @@ def summariseVisitList(record):
         if found == False:
             summarised.append([country, 0, 0, sys.maxsize, 0, 0])
 
-        # Country change - update visits, max, min, total
-        # Missing an "or" condition - country != cur_country or next-value-exists() (need to write my own iterator container)
-        # http://stackoverflow.com/questions/15226967/last-element-in-a-python-iterator
-        if country != cur_country[0] or not iterex.hasNext:
+        # Whenever country changes, or we are at the last element for a user
+        if country != cur_country[0] or i == len(pairs) - 1:
             for sublist in summarised:
-                # Modify country entry as previous one has ended
+                
+                #   Modify a country's stats for the user once a new country is visited
                 try:
                     if sublist[0] == cur_country[0]:
                         sublist[1] += 1
@@ -129,14 +102,14 @@ def summariseVisitList(record):
                 except ValueError:
                     break
 
-        # When the last photo changes country (and hence has visit time 0)
-        if country != tmp_cur_country[0] and not iterex.hasNext:
+        # When the last photo changes country (and hence has visit time 0, also the new min)
+        if country != tmp_cur_country[0] and i == len(pairs) - 1:
             for sublist in summarised:
                 if sublist[0] == country:
                     sublist[1] += 1
                     sublist[3] = 0
 
-    # Get average once all visits have been tallied and totalled
+    # Get average once all visits have been tallied and totalled, convert to days
     for sublist in summarised:
         if (sublist[1] > 0):
             sublist[4] = sublist[5] / sublist[1]
@@ -149,15 +122,21 @@ def summariseVisitList(record):
 
     return (user, summarised)
 
-
+#   Convert records with user,date keys to user keys
 def userAsKey(record):
     (user, date), country = record
-    return (user, (country, date))
+    return (user, (date, country))
 
 if __name__ == "__main__":
+
     sc = SparkContext(appName="Country visits per user")
     places = sc.textFile("/share/place.txt")
-    photos = sc.textFile(sys.argv[1])
+    files = []
+    for photo_file in sys.argv:
+        files.append(photo_file)
+    files = files[1:]
+    #photos = sc.textFile(','.join(files[1:]))
+    photos = sc.union([sc.textFile(f) for f in files])
 
     # Extracts (placeId, country) tuples from places file
     place_lookup = places.map(extractCountry)
@@ -168,13 +147,15 @@ if __name__ == "__main__":
     # Join extracted photos with places and get values to replace placeIds with countries
     # Map resulting value containing countries, using (user, date) tuples as the key and sorting as such
     # This gives us a sorted ((user, date), country) result
-    country_photos_byDate = prelim_photos.join(place_lookup).values().map(userDateKey).sortByKey()
+    country_photos_byDate = prelim_photos.join(place_lookup).values()
 
-    # Swap order to get (owner, (country, date)) tuples
+    # Swap order to get (owner, (date, country)) tuples
     country_photos_byUser = country_photos_byDate.map(userAsKey)
 
     # Group by key to get (owner, (country, date), (country, date)...) tuples
     # Operate on (country, date),... iterable to get visit stats
-    user_visit_list = country_photos_byUser.groupByKey().map(summariseVisitList)
+    sorted_visit_list = country_photos_byUser.groupByKey().map(sortPhotoList)
+
+    user_visit_list = sorted_visit_list.map(summariseVisitList)
     user_visit_list.saveAsTextFile("a-uservisitlist")
 

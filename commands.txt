@@ -1,0 +1,21 @@
+hdfs dfs -rm -r -f a-* && time spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n05.txt && hdfs dfs -cat a-uservisitlist/part-00000 && hdfs dfs -cat a-uservisitlist/part-00001 && hdfs dfs -cat a-uservisitlist/part-00002 && hdfs dfs -cat a-uservisitlist/part-00003
+
+
+hdfs dfs -rm -r -f a-* && time spark-submit --master yarn --num-executors 3 assignment2.py /share/small/partial.txt /share/small/partial.txt /share/small/partial.txt && hdfs dfs -cat a-uservisitlist/part-00000 && hdfs dfs -cat a-uservisitlist/part-00001 && hdfs dfs -cat a-uservisitlist/part-00002 && hdfs dfs -cat a-uservisitlist/part-00003 
+
+hdfs dfs -cat a-uservisitlist/part-00000 && hdfs dfs -cat a-uservisitlist/part-00001 && hdfs dfs -cat a-uservisitlist/part-00002 && hdfs dfs -cat a-uservisitlist/part-00003 && hdfs dfs -cat a-uservisitlist/part-00004 && hdfs dfs -cat a-uservisitlist/part-00005 && hdfs dfs -cat a-uservisitlist/part-00006 && hdfs dfs -cat a-uservisitlist/part-00007
+
+hdfs dfs -rm -r -f a-* && time spark-submit --master yarn --num-executors 1 assignment2.py input.txt && hdfs dfs -cat a-uservisitlist/part-00002
+
+scp assignment2.py  jtin2945@ec2-107-20-15-217.compute-1.amazonaws.com:~/sparkpyML/	
+
+500mb - n04.txt
+1gb - n01+n02.txt
+2gb - n01+n02+n01+n02.txt
+4gb - n00p2.txt, n01.txt, n04,n04.txt
+6gb - n00.txt, n01.txt, n02.txt
+10gb - /large folder OR n00.txt, n00.txt
+
+hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n03.txt 2>stderr.txt ; } 2>> times.txt && 
+
+hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py /share/small/partial.txt /share/small/partial.txt /share/small/partial.txt 2>stderr.txt ; } 2> times.txt
