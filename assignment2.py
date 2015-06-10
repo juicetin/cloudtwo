@@ -12,7 +12,7 @@ def extractCountry(record):
         placeId, woeID, latitude, longitude, placeName, placeTypeId, placeURL = record.split("\t")
         placeParts = placeName.split(",")
         country = placeParts[len(placeParts)-1]
-        return (placeId, country)
+        return (str(placeId), str(country))
     except:
         return ()
 
@@ -20,7 +20,7 @@ def extractCountry(record):
 def extractUserPhotos(record):
     try:
         photoId, owner, tagList, dateTaken, placeId, accuracy = record.split("\t")
-        return (placeId, (owner, dateTaken))
+        return (str(placeId), (str(owner), str(dateTaken)))
     except:
         return()
 
@@ -127,6 +127,11 @@ def userAsKey(record):
     (user, date), country = record
     return (user, (date, country))
 
+def combineLists(a,b):
+    a_list = list(a[1])
+    b_list = list(b[1])
+    return (a[0], a_list.extend(b_list))
+
 if __name__ == "__main__":
 
     sc = SparkContext(appName="Country visits per user")
@@ -142,7 +147,7 @@ if __name__ == "__main__":
     place_lookup = places.map(extractCountry)
 
     # Extracts (placeId, owner, dateTaken)) tuples from photos file
-    prelim_photos = photos.map(extractUserPhotos)
+    prelim_photos = photos.map(extractUserPhotos, 12)
 
     # Join extracted photos with places and get values to replace placeIds with countries
     # Map resulting value containing countries, using (user, date) tuples as the key and sorting as such
@@ -150,12 +155,13 @@ if __name__ == "__main__":
     country_photos_byDate = prelim_photos.join(place_lookup).values()
 
     # Swap order to get (owner, (date, country)) tuples
-    country_photos_byUser = country_photos_byDate.map(userAsKey)
+    country_photos_byUser = country_photos_byDate.map(userAsKey, 12)
 
     # Group by key to get (owner, (country, date), (country, date)...) tuples
     # Operate on (country, date),... iterable to get visit stats
-    sorted_visit_list = country_photos_byUser.groupByKey().map(sortPhotoList)
+    sorted_visit_list = country_photos_byUser.groupByKey().map(sortPhotoList, 12)
+    #sorted_visit_list = country_photos_byUser.reduceByKey(lambda a, b: combineLists(a, b)).map(sortPhotoList, 12)
 
-    user_visit_list = sorted_visit_list.map(summariseVisitList)
+    user_visit_list = sorted_visit_list.map(summariseVisitList, 12)
     user_visit_list.saveAsTextFile("a-uservisitlist")
 

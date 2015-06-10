@@ -29,6 +29,12 @@ user	0m22.705s
 sys	0m1.328s
 
 =============================================
+n00.txt
+real	10m35.326s
+user	0m24.458s
+sys	0m1.232s
+
+=============================================
 large folder [failed, too many files error]
 real	17m9.741s
 user	0m32.306s

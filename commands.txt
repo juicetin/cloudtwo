@@ -1,21 +1,49 @@
 hdfs dfs -rm -r -f a-* && time spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n05.txt && hdfs dfs -cat a-uservisitlist/part-00000 && hdfs dfs -cat a-uservisitlist/part-00001 && hdfs dfs -cat a-uservisitlist/part-00002 && hdfs dfs -cat a-uservisitlist/part-00003
 
 
-hdfs dfs -rm -r -f a-* && time spark-submit --master yarn --num-executors 3 assignment2.py /share/small/partial.txt /share/small/partial.txt /share/small/partial.txt && hdfs dfs -cat a-uservisitlist/part-00000 && hdfs dfs -cat a-uservisitlist/part-00001 && hdfs dfs -cat a-uservisitlist/part-00002 && hdfs dfs -cat a-uservisitlist/part-00003 
+hdfs dfs -rm -r -f a-* && time spark-submit --master yarn --num-executors 3 assignment2.py /share/small/partial.txt /share/small/partial.txt /share/small/partial.txt && hdfs dfs -cat a-uservisitlist/part-00000 && hdfs dfs -cat a-uservisitlist/part-00001 && hdfs dfs -cat a-uservisitlist/part-00002 && hdfs dfs -cat a-uservisitlist/part-00003
 
-hdfs dfs -cat a-uservisitlist/part-00000 && hdfs dfs -cat a-uservisitlist/part-00001 && hdfs dfs -cat a-uservisitlist/part-00002 && hdfs dfs -cat a-uservisitlist/part-00003 && hdfs dfs -cat a-uservisitlist/part-00004 && hdfs dfs -cat a-uservisitlist/part-00005 && hdfs dfs -cat a-uservisitlist/part-00006 && hdfs dfs -cat a-uservisitlist/part-00007
+hdfs dfs -cat a-uservisitlist/*
 
-hdfs dfs -rm -r -f a-* && time spark-submit --master yarn --num-executors 1 assignment2.py input.txt && hdfs dfs -cat a-uservisitlist/part-00002
+hdfs dfs -rm -r -f a-* && time spark-submit --master yarn --num-executors 3 assignment2.py /share/small/partial.txt
 
 scp assignment2.py  jtin2945@ec2-107-20-15-217.compute-1.amazonaws.com:~/sparkpyML/	
 
 500mb - n04.txt
 1gb - n01+n02.txt
 2gb - n01+n02+n01+n02.txt
-4gb - n00p2.txt, n01.txt, n04,n04.txt
+4gb - n00p2.txt,	  n01.txt, n04,n04.txt
 6gb - n00.txt, n01.txt, n02.txt
 10gb - /large folder OR n00.txt, n00.txt
 
-hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n03.txt 2>stderr.txt ; } 2>> times.txt && 
+hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py 4g 2>stderr.txt ; } 2>> times.txt && hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py 4g 2>stderr.txt ; } 2>> times.txt && hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py 4g 2>stderr.txt ; } 2>> times.txt
 
 hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py /share/small/partial.txt /share/small/partial.txt /share/small/partial.txt 2>stderr.txt ; } 2> times.txt
+
+hdfs dfs -mkdir 1g && hdfs dfs -mkdir 2g && hdfs dfs -mkdir 4g &&
+hdfs dfs -cp /share/large/n01.txt ./1g && hdfs dfs -cp /share/large/n02.txt ./1g &&
+hdfs dfs -cp /share/large/n01.txt ./2g/n01-2.txt && hdfs dfs -cp /share/large/n02.txt ./2g/n02-2.txt && hdfs dfs -cp /share/large/n01.txt ./2g && hdfs dfs -cp /share/large/n02.txt ./2g &&
+hdfs dfs -cp /share/large/n00p2.txt ./4g && hdfs dfs -cp /share/large/n01.txt ./4g && hdfs dfs -cp /share/large/n04.txt ./4g && hdfs dfs -cp /share/large/n04.txt ./4g/n04-2.txt
+
+hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py 1g 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist 1g
+
+hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n07.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen07 && hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n06.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen06 && hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n05.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen05 && hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n04.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen04 && hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n03.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen03 && hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n02.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen02 && hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n01.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen01 
+
+hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n00p2.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen00p2 &&
+hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n00.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen00
+
+hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n00.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen00
+
+hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py /share/large/n00p2.txt 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist a2-largen00p2
+
+hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py 2g 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist 2g && hdfs dfs -rm 2g/n* && hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py 4g 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist 4g && hdfs dfs -rm 4g/n* && hdfs dfs -rm -r -f a-* && { spark-submit --master yarn --num-executors 3 assignment2.py 6g 2>stderr.txt ; } && hdfs dfs -mv a-uservisitlist 6g && hdfs dfs -rm 6g
+
+hdfs dfs -mv 2g/a-uservisitlist/* 2g/ && hdfs dfs -mv 4g/a-uservisitlist/* 4g/ && hdfs dfs -mv 6g/a-uservisitlist/* 6g/
+
+hdfs dfs -rm -r 2g/a-uservisitlist && hdfs dfs -rm -r 4g/a-uservisitlist && hdfs dfs -rm -r 6g/a-uservisitlist
+
+
+hdfs dfs -rm -r -f a-* && { time spark-submit --master yarn --num-executors 3 assignment2.py /share/small/partial.txt 2>stderr.txt ; }
+
+
+hdfs dfs -rm -r -f a-* && spark-submit --master yarn --num-executors 3 assignment2.py /share/small/partial.txt
